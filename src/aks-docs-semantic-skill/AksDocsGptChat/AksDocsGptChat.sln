@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AksDocsGptChat", "AksDocsGptChat.csproj", "{453A6C10-B6F5-43E7-9BF1-E889DC19DB87}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{453A6C10-B6F5-43E7-9BF1-E889DC19DB87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{453A6C10-B6F5-43E7-9BF1-E889DC19DB87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{453A6C10-B6F5-43E7-9BF1-E889DC19DB87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{453A6C10-B6F5-43E7-9BF1-E889DC19DB87}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E23C7E86-AC04-43FD-95A9-C5482D6B1E87}
+	EndGlobalSection
+EndGlobal

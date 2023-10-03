@@ -49,11 +49,12 @@ public static class Program
 
         // Get OpenAI settings from environment variables
         var azureOpenAiChatDeploymentName = Environment.GetEnvironmentVariable("AzureOpenAiChatDeploymentName");
+        var azureOpenAiEmbeddingDeploymentName = Environment.GetEnvironmentVariable("AzureOpenAiEmbeddingDeploymentName");
         var azureOpenAiEndpoint = Environment.GetEnvironmentVariable("AzureOpenAiEndpoint");
         var azureOpenAiKey = Environment.GetEnvironmentVariable("AzureOpenAiKey");
 
         // Check to see that the environment variables are not null
-        if (azureOpenAiChatDeploymentName == null || azureOpenAiEndpoint == null || azureOpenAiKey == null)
+        if (azureOpenAiChatDeploymentName == null || azureOpenAiEmbeddingDeploymentName == null || azureOpenAiEndpoint == null || azureOpenAiKey == null)
         {
             throw new ArgumentNullException("AzureOpenAiChatDeploymentName, AzureOpenAiEndpoint, or AzureOpenAiKey is null. Please check your local.settings.json file.");
         }
@@ -61,6 +62,10 @@ public static class Program
         var kernel = new KernelBuilder()
             .WithAzureChatCompletionService(
                 azureOpenAiChatDeploymentName, 
+                azureOpenAiEndpoint, 
+                azureOpenAiKey)
+            .WithAzureTextEmbeddingGenerationService(
+                azureOpenAiEmbeddingDeploymentName, 
                 azureOpenAiEndpoint, 
                 azureOpenAiKey)
             .Build();

@@ -1,0 +1,3 @@
+Generate a summary for the given block of text.  This summary will be used to create an embedding for the text.
+
+Text: {{$text}}

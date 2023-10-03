@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using HtmlAgilityPack;
 using Microsoft.SemanticKernel.Text;
+using Microsoft.SemanticKernel.Orchestration;
+using HttpSummarization.Models;
 
 namespace HttpSummarization
 {
@@ -54,33 +56,55 @@ namespace HttpSummarization
             // // parse the html with htmlagilitypack
             var htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(html);
-
+            
             var mainDocTitle = htmlDocument.DocumentNode.SelectSingleNode("//title").InnerText;
             var mainContent = htmlDocument.DocumentNode.SelectSingleNode("//main[@id='main']");
+
+            if (mainContent == null)
+            {
+                mainContent = htmlDocument.DocumentNode.SelectSingleNode("//body");
+            }
+
             var mainContentHtml = mainContent.InnerHtml;
             var mainContentText = mainContent.InnerText;
 
-            // if(uri.Host == "learn.microsoft.com")
-            // {
-                
-            // }
-            
-            var lineChunks = TextChunker.SplitPlainTextLines(mainContentText, 120);
-            var paragraphChunks = TextChunker.SplitPlainTextParagraphs(lineChunks, 120);
+            var lineChunks = TextChunker.SplitPlainTextLines(mainContentText, 200);
+            var paragraphChunks = TextChunker.SplitPlainTextParagraphs(lineChunks, 500);
+
+            var pluginDirectory = Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Plugins");
+            var plugin = _kernel.ImportSemanticSkillFromDirectory(pluginDirectory, "SemanticPlugin");
+ 
+            var functionName = "Summarize";
+            var function = plugin[functionName];
+
+            var summaryTexts = new List<string>();
 
             for (var i = 0; i < paragraphChunks.Count; i++)
             {
-                Console.WriteLine(paragraphChunks[i]);
+                
+                var paragraph = paragraphChunks[i];
+                
+                var context = new ContextVariables();
+                context.Set("text", paragraph);
+                var summaryResponse = await _kernel.RunAsync(context, function);
+                var summaryText = summaryResponse.ToString();
+                summaryTexts.Add(summaryText);
 
-                if (i < paragraphChunks.Count - 1)
-                {
-                    Console.WriteLine("------------------------");
-                }
+                var summary = new Summary(
+                    title: mainDocTitle,
+                    summaryText: summaryText,
+                    originalText: paragraph,
+                    articleUrl: docUri,
+                    links: null
+                );
+
+                Console.WriteLine("summary: {summaryText}");
+                Console.WriteLine("--------------------");
             }
             
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-            response.WriteString(paragraphChunks.ToString());
+            response.WriteString(summaryTexts[0]);
 
             return response;
         }

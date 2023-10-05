@@ -3,5 +3,5 @@ Content-Type: application/json
 
 {
     "id": "1",
-    "docUri": "https://learn.microsoft.com/en-us/azure/aks/private-clusters?tabs=azure-portal" 
+    "docUrl": "https://learn.microsoft.com/en-us/azure/aks/private-clusters?tabs=azure-portal" 
 }

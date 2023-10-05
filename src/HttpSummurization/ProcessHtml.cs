@@ -4,9 +4,10 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using HtmlAgilityPack;
 using Microsoft.SemanticKernel.Text;
 using Microsoft.SemanticKernel.Orchestration;
+using Microsoft.SemanticKernel.SkillDefinition;
+using HtmlAgilityPack;
 using HttpSummarization.Models;
 
 namespace HttpSummarization
@@ -16,10 +17,19 @@ namespace HttpSummarization
         private readonly ILogger _logger;
         private readonly IKernel _kernel;
 
+        // should probably be done in startup as a singleton/service injection
+        private readonly string _pluginDirectory = Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Plugins");
+
+        private readonly IDictionary<string, ISKFunction> _semanticPlugins;
+        private readonly ISKFunction _summarizePlugin;
+ 
         public ProcessHtml(ILoggerFactory loggerFactory, IKernel kernel)
         {
             _logger = loggerFactory.CreateLogger<ProcessHtml>();
             _kernel = kernel;
+            // should probably be done in startup as a singleton/service injection
+            _semanticPlugins = _kernel.ImportSemanticSkillFromDirectory(_pluginDirectory, "SemanticPlugin");
+            _summarizePlugin = _semanticPlugins["Summarize"];
         }
 
         [Function("ProcessHtml")]
@@ -30,29 +40,59 @@ namespace HttpSummarization
         {
             _logger.LogInformation("ProcessHtml function triggered.");
 
-            // Read docUri and Id from request body
+            // Read docUrl and Id from request body
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var requestBodyJson = JsonDocument.Parse(requestBody);
-            var docUri = requestBodyJson.RootElement.GetProperty("docUri").GetString();
+            var docUrl = requestBodyJson.RootElement.GetProperty("docUrl").GetString() ?? string.Empty;
             
-            // Check for missing docUri property
-            if (docUri == null)
+            validateUri(docUrl);
+
+            var (mainContentHtml, mainContentText) = await ProcessHtmlFromUrl(docUrl);
+            var paragraphChunks = chunkText(mainContentText, 200, 500);
+            var summaryTextList = new List<string>();
+
+            for (var i = 0; i < paragraphChunks.Count; i++)
             {
-                throw new ArgumentNullException("docUri is null. Please check your request body.");
+                var paragraph = paragraphChunks[i];
+                var context = new ContextVariables();
+                context.Set("text", paragraph);
+                var summaryResponse = await _kernel.RunAsync(context, _summarizePlugin);
+                var summaryText = summaryResponse.ToString();
+                summaryTextList.Add(summaryText);
+
+                // create an embedding for the summary text
+
+                // save the embedding to azure cogntive search
+            }
+            
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+            response.WriteString(summaryTextList[0]);
+
+            return response;
+        }
+
+        private void validateUri(string docUrl)
+        {
+            if (string.IsNullOrEmpty(docUrl))
+            {
+                throw new ArgumentException("docUrl cannot be null or empty");
             }
 
-            if (!Uri.TryCreate(docUri, UriKind.Absolute, out var uri) || uri.Host == null)
+            if (!Uri.IsWellFormedUriString(docUrl, UriKind.Absolute))
             {
-                throw new ArgumentException("docUri is not a valid URL. Please check your request body.");
+                throw new ArgumentException("docUrl is not a valid absolute uri");
             }
+        }
 
-            // create a http client request and call docuri endpoint
-            var request = new HttpRequestMessage(HttpMethod.Get, docUri);
+        private async Task<(string html, string innerTextOutput)> ProcessHtmlFromUrl(string docUrl)
+        {
+            // create a http client request and call docurl endpoint
+            var request = new HttpRequestMessage(HttpMethod.Get, docUrl);
             var client = new HttpClient();
             var httpDocResponse = await client.SendAsync(request);
             var html = await httpDocResponse.Content.ReadAsStringAsync();
 
-            
             // // parse the html with htmlagilitypack
             var htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(html);
@@ -68,45 +108,15 @@ namespace HttpSummarization
             var mainContentHtml = mainContent.InnerHtml;
             var mainContentText = mainContent.InnerText;
 
-            var lineChunks = TextChunker.SplitPlainTextLines(mainContentText, 200);
-            var paragraphChunks = TextChunker.SplitPlainTextParagraphs(lineChunks, 500);
+            return(mainContentHtml, mainContentText);
+        }
 
-            var pluginDirectory = Path.Combine(System.IO.Directory.GetCurrentDirectory(), "Plugins");
-            var plugin = _kernel.ImportSemanticSkillFromDirectory(pluginDirectory, "SemanticPlugin");
- 
-            var functionName = "Summarize";
-            var function = plugin[functionName];
+        private List<string> chunkText(string contentText, int maxLinetokens, int maxParagraphTokens)
+        {
+            var lineChunks = TextChunker.SplitPlainTextLines(contentText, maxLinetokens);
+            var paragraphChunks = TextChunker.SplitPlainTextParagraphs(lineChunks, maxParagraphTokens);
 
-            var summaryTexts = new List<string>();
-
-            for (var i = 0; i < paragraphChunks.Count; i++)
-            {
-                
-                var paragraph = paragraphChunks[i];
-                
-                var context = new ContextVariables();
-                context.Set("text", paragraph);
-                var summaryResponse = await _kernel.RunAsync(context, function);
-                var summaryText = summaryResponse.ToString();
-                summaryTexts.Add(summaryText);
-
-                var summary = new Summary(
-                    title: mainDocTitle,
-                    summaryText: summaryText,
-                    originalText: paragraph,
-                    articleUrl: docUri,
-                    links: null
-                );
-
-                Console.WriteLine("summary: {summaryText}");
-                Console.WriteLine("--------------------");
-            }
-            
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-            response.WriteString(summaryTexts[0]);
-
-            return response;
+            return paragraphChunks;
         }
     }
 }

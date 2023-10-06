@@ -1,0 +1,6 @@
+POST   http://localhost:7071/api/AksChat
+Content-Type: application/json
+
+{
+    "query": "Are there limitations to using AKS Private Clusters?"
+}

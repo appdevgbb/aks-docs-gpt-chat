@@ -60,6 +60,8 @@ namespace HttpSummarization
                 var summary = new {
                     id = $"{docTitle}-{i}",
                     externalSourceName = "Azure Docs",
+                    url = docUrl,
+                    title = docTitle,
                     description = paragraph,
                     text = summaryText
                 };

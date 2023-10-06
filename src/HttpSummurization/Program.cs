@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch;
 using System.Text.Json;
 
 
@@ -52,6 +53,12 @@ public static class Program
         var azureOpenAiEmbeddingDeploymentName = Environment.GetEnvironmentVariable("AzureOpenAiEmbeddingDeploymentName");
         var azureOpenAiEndpoint = Environment.GetEnvironmentVariable("AzureOpenAiEndpoint");
         var azureOpenAiKey = Environment.GetEnvironmentVariable("AzureOpenAiKey");
+        var azureCognitiveSearchEndpoint = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SEARCH_ENDPOINT") ?? string.Empty;
+        var azureCognitiveSearchApiKey = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SEARCH_APIKEY") ?? string.Empty;
+        
+        var MemoryStore = new AzureCognitiveSearchMemoryStore(
+            azureCognitiveSearchEndpoint,
+            azureCognitiveSearchApiKey);
 
         // Check to see that the environment variables are not null
         if (azureOpenAiChatDeploymentName == null || azureOpenAiEmbeddingDeploymentName == null || azureOpenAiEndpoint == null || azureOpenAiKey == null)
@@ -68,6 +75,7 @@ public static class Program
                 azureOpenAiEmbeddingDeploymentName, 
                 azureOpenAiEndpoint, 
                 azureOpenAiKey)
+            .WithMemoryStorage(MemoryStore)
             .Build();
 
         return kernel;   

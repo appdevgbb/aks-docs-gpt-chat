@@ -3,8 +3,8 @@
     "Values": {
       "AzureWebJobsStorage": "UseDevelopmentStorage=true",
       "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-      "DocumentAnalysisEndpoint": "https://{document-intelligence}.cognitiveservices.azure.com/",
-      "DocumentAnalysisKey": "{key}",
+      "AZURE_COGNITIVE_SEARCH_ENDPOINT": "https://{document-intelligence}.cognitiveservices.azure.com/",
+      "AZURE_COGNITIVE_SEARCH_APIKEY": "{key}",
       "AzureOpenAiEndpoint": "https://{openai}.openai.azure.com/",
       "AzureOpenAiKey": "{key}",
       "AzureOpenAiChatDeploymentName": "{deployment-name}",

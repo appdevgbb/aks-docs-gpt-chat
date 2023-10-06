@@ -45,20 +45,20 @@ namespace HttpSummarization
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var requestBodyJson = JsonDocument.Parse(requestBody);
             var docUrl = requestBodyJson.RootElement.GetProperty("docUrl").GetString() ?? string.Empty;
-            
-            validateUri(docUrl);
+
+            ValidateUri(docUrl);
 
             var (docTitle, mainContentHtml, mainContentText) = await ProcessHtmlFromUrl(docUrl);
-            var paragraphChunks = chunkText(mainContentText, 200, 500);
+            var paragraphChunks = ChunkText(mainContentText, 200, 500);
             var summaryTextList = new List<string>();
 
             for (var i = 0; i < paragraphChunks.Count; i++)
             {
                 var paragraph = paragraphChunks[i];
-                var summaryText = await generateTextSummary(paragraph);
+                var summaryText = await GenerateTextSummary(paragraph);
 
-                var thing = new {
-                    id = "{doctitle}-{i}}",
+                var summary = new {
+                    id = $"{docTitle}-{i}",
                     externalSourceName = "Azure Docs",
                     description = paragraph,
                     text = summaryText
@@ -66,9 +66,12 @@ namespace HttpSummarization
                 
                 summaryTextList.Add(summaryText);
 
-                // create an embedding for the summary text
+                // SK can be used to create an embedding and store the summary in a memory collection in one shot see [this](https://github.com/microsoft/semantic-kernel/blob/1217d8540d76e2dd0a8f9bd568d98efa1c4ebee1/dotnet/samples/KernelSyntaxExamples/Example14_SemanticMemory.cs#L141) example
 
-                // save the embedding to azure cogntive search
+                await _kernel.Memory.SaveInformationAsync(
+                    collection: _memoryCollectionName, 
+                    id: summary.id, 
+                    text: summary.text);
             }
             
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -78,7 +81,7 @@ namespace HttpSummarization
             return response;
         }
 
-        private void validateUri(string docUrl)
+        private static void ValidateUri(string docUrl)
         {
             if (string.IsNullOrEmpty(docUrl))
             {
@@ -91,7 +94,7 @@ namespace HttpSummarization
             }
         }
 
-        private async Task<(string mainDocTitle, string html, string innerTextOutput)> ProcessHtmlFromUrl(string docUrl)
+        private static async Task<(string mainDocTitle, string html, string innerTextOutput)> ProcessHtmlFromUrl(string docUrl)
         {
             // create a http client request and call docurl endpoint
             var request = new HttpRequestMessage(HttpMethod.Get, docUrl);
@@ -117,7 +120,7 @@ namespace HttpSummarization
             return(mainDocTitle, mainContentHtml, mainContentText);
         }
 
-        private List<string> chunkText(string contentText, int maxLinetokens, int maxParagraphTokens)
+        private static List<string> ChunkText(string contentText, int maxLinetokens, int maxParagraphTokens)
         {
             // should probably use blingfire here https://www.nuget.org/packages/BlingFireNuget/
             var lineChunks = TextChunker.SplitPlainTextLines(contentText, maxLinetokens);
@@ -126,7 +129,7 @@ namespace HttpSummarization
             return paragraphChunks;
         }
 
-        private async Task<string> generateTextSummary(string text)
+        private async Task<string> GenerateTextSummary(string text)
         {
             var context = new ContextVariables();
             

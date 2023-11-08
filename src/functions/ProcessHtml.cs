@@ -9,9 +9,9 @@ using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.SkillDefinition;
 using HtmlAgilityPack;
 
-namespace HttpSummarization
+namespace AksChatBot
 {
-    public class ProcessHtml
+    public class ProcessHtmlDoc
     {
         private readonly ILogger _logger;
         private readonly IKernel _kernel;
@@ -23,9 +23,9 @@ namespace HttpSummarization
         private readonly ISKFunction _summarizePlugin;
         private readonly string _memoryCollectionName = "aks-docs";
  
-        public ProcessHtml(ILoggerFactory loggerFactory, IKernel kernel)
+        public ProcessHtmlDoc(ILoggerFactory loggerFactory, IKernel kernel)
         {
-            _logger = loggerFactory.CreateLogger<ProcessHtml>();
+            _logger = loggerFactory.CreateLogger<ProcessHtmlDoc>();
             _kernel = kernel;
             // should probably be done in startup as a singleton/service injection
             _semanticPlugins = _kernel.ImportSemanticSkillFromDirectory(_pluginDirectory, "SemanticPlugin");
@@ -33,13 +33,13 @@ namespace HttpSummarization
 
         }
 
-        [Function("ProcessHtml")]
+        [Function("ProcessHtmlDoc")]
         public async Task<HttpResponseData> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post")] 
             HttpRequestData req,
             FunctionContext executionContext)
         {
-            _logger.LogInformation("ProcessHtml function triggered.");
+            _logger.LogInformation("ProcessHtmlDoc function triggered.");
 
             // Read docUrl and Id from request body
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -48,7 +48,7 @@ namespace HttpSummarization
 
             ValidateUri(docUrl);
 
-            var (docTitle, mainContentHtml, mainContentText) = await ProcessHtmlFromUrl(docUrl);
+            var (docTitle, mainContentHtml, mainContentText) = await ProcessHtmlDocFromUrl(docUrl);
             var paragraphChunks = ChunkText(mainContentText, 200, 500);
             var summaryTextList = new List<string>();
 
@@ -96,7 +96,7 @@ namespace HttpSummarization
             }
         }
 
-        private static async Task<(string mainDocTitle, string html, string innerTextOutput)> ProcessHtmlFromUrl(string docUrl)
+        private static async Task<(string mainDocTitle, string html, string innerTextOutput)> ProcessHtmlDocFromUrl(string docUrl)
         {
             // create a http client request and call docurl endpoint
             var request = new HttpRequestMessage(HttpMethod.Get, docUrl);

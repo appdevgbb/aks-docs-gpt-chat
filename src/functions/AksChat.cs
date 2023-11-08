@@ -11,9 +11,9 @@ using Microsoft.SemanticKernel.SkillDefinition;
 using Microsoft.SemanticKernel.Memory;
 using HtmlAgilityPack;
 
-namespace HttpSummarization
+namespace AksChatBot
 {
-    public class AksChat
+    public class Chat
     {
         private readonly ILogger _logger;
         private readonly IKernel _kernel;
@@ -25,22 +25,22 @@ namespace HttpSummarization
         private readonly ISKFunction _responsePlugin;
         private readonly string _memoryCollectionName = "aks-docs";
  
-        public AksChat(ILoggerFactory loggerFactory, IKernel kernel)
+        public Chat(ILoggerFactory loggerFactory, IKernel kernel)
         {
-            _logger = loggerFactory.CreateLogger<AksChat>();
+            _logger = loggerFactory.CreateLogger<Chat>();
             _kernel = kernel;
             // should probably be done in startup as a singleton/service injection
             _semanticPlugins = _kernel.ImportSemanticSkillFromDirectory(_pluginDirectory, "SemanticPlugin");
             _responsePlugin = _semanticPlugins["Response"];
         }
 
-        [Function("AksChat")]
+        [Function("Chat")]
         public async Task<HttpResponseData> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post")] 
             HttpRequestData req,
             FunctionContext executionContext)
         {
-            _logger.LogInformation("AksChat function triggered.");
+            _logger.LogInformation("Chat function triggered.");
 
             // Read query and Id from request body
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -79,8 +79,8 @@ namespace HttpSummarization
                 result.Append("\n" + text + "\n");
                 
                 Console.WriteLine("-------------");
-                Console.WriteLine($"Info: {text}");
-                Console.WriteLine($"Info: {relevance}");
+                Console.WriteLine($"(Info) Text: {text}");
+                Console.WriteLine($"(Info) Relevance: {relevance}");
                 Console.WriteLine("-------------");
             }
 

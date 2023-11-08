@@ -1,7 +1,7 @@
-POST   http://localhost:7071/api/ProcessHtml
+POST   http://localhost:7071/api/ProcessHtmlDoc
 Content-Type: application/json
 
 {
-    "id": "1",
-    "docUrl": "https://learn.microsoft.com/en-us/azure/aks/private-clusters?tabs=azure-portal" 
+    "id": "4",
+    "docUrl": "https://azure.microsoft.com/en-us/blog/announcing-the-general-availability-of-azure-cni-overlay-in-azure-kubernetes-service/" 
 }

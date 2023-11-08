@@ -1,6 +1,6 @@
-POST   http://localhost:7071/api/AksChat
+POST   http://localhost:7071/api/Chat
 Content-Type: application/json
 
 {
-    "query": "Are there limitations to using AKS Private Clusters?"
+    "query": "What is Azure CNI Overlay? when was it introduced?"
 }

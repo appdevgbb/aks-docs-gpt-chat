@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Orchestration;
 
-namespace pattern_ai_doc_recognizer
+namespace AksChatBot
 {
     public class SummarizeText
     {

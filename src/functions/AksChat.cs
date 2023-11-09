@@ -24,7 +24,7 @@ namespace AksChatBot
         private readonly IDictionary<string, ISKFunction> _semanticPlugins;
         private readonly ISKFunction _responsePlugin;
         private readonly string _memoryCollectionName = "aks-docs";
- 
+
         public Chat(ILoggerFactory loggerFactory, IKernel kernel)
         {
             _logger = loggerFactory.CreateLogger<Chat>();
@@ -36,7 +36,7 @@ namespace AksChatBot
 
         [Function("Chat")]
         public async Task<HttpResponseData> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post")] 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] 
             HttpRequestData req,
             FunctionContext executionContext)
         {

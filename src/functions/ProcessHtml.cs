@@ -22,7 +22,7 @@ namespace AksChatBot
         private readonly IDictionary<string, ISKFunction> _semanticPlugins;
         private readonly ISKFunction _summarizePlugin;
         private readonly string _memoryCollectionName = "aks-docs";
- 
+
         public ProcessHtmlDoc(ILoggerFactory loggerFactory, IKernel kernel)
         {
             _logger = loggerFactory.CreateLogger<ProcessHtmlDoc>();
@@ -35,7 +35,7 @@ namespace AksChatBot
 
         [Function("ProcessHtmlDoc")]
         public async Task<HttpResponseData> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post")] 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] 
             HttpRequestData req,
             FunctionContext executionContext)
         {

@@ -22,7 +22,7 @@ namespace AksChatBot
 
         [Function("SummarizeText")]
         public async Task<HttpResponseData> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post")] 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] 
             HttpRequestData req,
             FunctionContext executionContext)
         {

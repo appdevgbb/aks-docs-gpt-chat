@@ -2,5 +2,5 @@ POST   http://localhost:7071/api/Chat
 Content-Type: application/json
 
 {
-    "query": "What is Azure CNI Overlay? when was it introduced?"
+    "query": "What is Azure CNI Overlay? How does it differ from AKS with Kubenet?"
 }

@@ -1,0 +1,8 @@
+name: gbb-aks-llm-chat-bot
+metadata:
+  template: gbb-aks-llm-chat-bot@0.0.1-beta
+services:
+  api:
+    project: ./src
+    language: dotnet
+    host: appservice

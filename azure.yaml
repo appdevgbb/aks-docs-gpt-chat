@@ -5,4 +5,4 @@ services:
   api:
     project: ./src
     language: dotnet
-    host: appservice
+    host: function

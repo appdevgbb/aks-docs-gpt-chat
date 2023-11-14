@@ -174,7 +174,7 @@ module openAi 'core/cognitive/open-ai.bicep' = {
         }
       }
       {
-        deploymentName: embeddingDeploymentName
+        name: embeddingDeploymentName
         model: {
           format: 'OpenAI'
           name: embeddingModelName

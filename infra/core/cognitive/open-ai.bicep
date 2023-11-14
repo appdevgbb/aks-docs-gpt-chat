@@ -7,7 +7,7 @@ param customSubDomainName string = name
 param deployments array
 
 param kind string = 'OpenAI'
-param publicNetworkAccess string = 'Disabled'
+param publicNetworkAccess string = 'Enabled'
 param sku object = {
   name: 'S0'
 }

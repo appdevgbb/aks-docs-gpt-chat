@@ -22,6 +22,23 @@ param logAnalyticsName string = ''
 param resourceGroupName string = ''
 param storageAccountName string = ''
 param aiResourceName string = ''
+param openAiServiceName string = ''
+param arrayVersion0301Locations array = [
+  'westeurope'
+  'southcentralus'
+]
+param chatGptModelVersion string = ((contains(arrayVersion0301Locations, location)) ? '0301' : '0613')
+
+var openAiSkuName = 'S0'
+var chatGptDeploymentName = 'gpt-35-turbo'
+var chatGptModelName = 'gpt-35-turbo'
+var openaiApiKeySecretName = 'openai-apikey'
+
+var embeddingDeploymentName = 'ada-002'
+var embeddingModelName = 'text-embedding-ada-002'
+var embeddingModelVersion = '2'
+//Determine the version of the chat model to deploy
+
 
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
@@ -47,35 +64,6 @@ module ai 'app/ai.bicep' = {
   }
 }
 
-// The application backend
-module api './app/api.bicep' = {
-  name: 'api'
-  scope: rg
-  params: {
-    name: !empty(apiServiceName) ? apiServiceName : '${abbrs.webSitesFunctions}api-${resourceToken}'
-    location: location
-    tags: tags
-    applicationInsightsName: monitoring.outputs.applicationInsightsName
-    appServicePlanId: appServicePlan.outputs.id
-    keyVaultName: keyVault.outputs.name
-    storageAccountName: storage.outputs.name
-    appSettings: {
-      AI_SECRET: cognitiveService.listKeys().key1
-      AI_URL: ai.outputs.url
-    }
-  }
-}
-
-// Give the API access to KeyVault
-module apiKeyVaultAccess './core/security/keyvault-access.bicep' = {
-  name: 'api-keyvault-access'
-  scope: rg
-  params: {
-    keyVaultName: keyVault.outputs.name
-    principalId: api.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
-  }
-}
-
 // Create an App Service Plan to group applications under the same payment plan and SKU
 module appServicePlan './core/host/appserviceplan.bicep' = {
   name: 'appserviceplan'
@@ -88,6 +76,35 @@ module appServicePlan './core/host/appserviceplan.bicep' = {
       name: 'Y1'
       tier: 'Dynamic'
     }
+  }
+}
+
+// The application backend
+module api './app/intelligent-app.bicep' = {
+  name: 'api'
+  scope: rg
+  params: {
+    name: !empty(apiServiceName) ? apiServiceName : '${abbrs.webSitesFunctions}api-${resourceToken}'
+    location: location
+    tags: tags
+    applicationInsightsName: monitoring.outputs.applicationInsightsName
+    appServicePlanId: appServicePlan.outputs.id
+    keyVaultName: keyVault.outputs.name
+    storageAccountName: storage.outputs.name
+    AzureOpenAiChatDeploymentName: chatGptDeploymentName
+    AzureOpenAiEmbeddingDeploymentName: embeddingDeploymentName
+    openAiAccountName: openAi.outputs.openAiName
+    cognitiveSearchAccountName: cognitiveSearch.outputs.name
+  }
+}
+
+// Give the API access to KeyVault
+module apiKeyVaultAccess './core/security/keyvault-access.bicep' = {
+  name: 'api-keyvault-access'
+  scope: rg
+  params: {
+    keyVaultName: keyVault.outputs.name
+    principalId: api.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
   }
 }
 
@@ -114,6 +131,16 @@ module keyVault './core/security/keyvault.bicep' = {
   }
 }
 
+module openaiKeyVaultSecret './core/security/keyvault-secret.bicep' = {
+  name: 'openai-keyvault-secret'
+  scope: rg
+  params: {
+    keyVaultName: keyVault.outputs.name
+    secretName: openaiApiKeySecretName
+    openAiName: openAi.outputs.openAiName
+  }
+}
+
 // Monitor application with Azure Monitor
 module monitoring './core/monitor/monitoring.bicep' = {
   name: 'monitoring'
@@ -127,9 +154,44 @@ module monitoring './core/monitor/monitoring.bicep' = {
   }
 }
 
-resource cognitiveService 'Microsoft.CognitiveServices/accounts@2021-10-01' existing =  {
-  name: !empty(aiResourceName) ? aiResourceName : '${abbrs.cognitiveServicesTextAnalytics}-${resourceToken}'
+module openAi 'core/cognitive/open-ai.bicep' = {
+  name: 'openai'
   scope: rg
+  params: {
+    name: !empty(openAiServiceName) ? openAiServiceName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    location: location
+    tags: tags
+    sku: {
+      name: openAiSkuName
+    }
+    deployments: [
+      {
+        name: chatGptDeploymentName
+        model: {
+          format: 'OpenAI'
+          name: chatGptModelName
+          version: chatGptModelVersion
+        }
+      }
+      {
+        deploymentName: embeddingDeploymentName
+        model: {
+          format: 'OpenAI'
+          name: embeddingModelName
+          version: embeddingModelVersion
+        }
+      }
+    ]
+  }
+}
+
+module cognitiveSearch 'core/search/azure-cognitive-search.bicep' = {
+  name: 'cognitive-search'
+  scope: rg
+  params: {
+    name: '${abbrs.searchSearchServices}${resourceToken}'
+    location: location
+  }
 }
 
 // Data outputs

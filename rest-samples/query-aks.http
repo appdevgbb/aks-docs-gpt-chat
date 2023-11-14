@@ -1,4 +1,4 @@
-POST   http://localhost:8080/api/Chat
+POST   https://func-api-fd3a4rnew474c.azurewebsites.net/api/Chat
 Content-Type: application/json
 
 {
